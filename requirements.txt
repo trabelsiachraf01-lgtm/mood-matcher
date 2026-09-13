@@ -1,0 +1,5 @@
+torch==2.14.0
+git+https://github.com/encord-team/ebind@7909701e9372353ca678b9515f9f61cf87c83c71
+httpx==0.28.1
+python-dotenv==1.2.3
+pytest==9.1.1
