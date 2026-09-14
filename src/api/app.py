@@ -1,12 +1,9 @@
-"""Minimal API hooking the frontend up to the real pipeline (captioning + embedding),
-matched against a 2-item in-memory catalog — one image, one placeholder song — since the
-real ingestion pipeline doesn't exist yet. This exists to prove the full loop end-to-end
-before building that pipeline, not to be a real product backend.
+"""The real API: captioning + embedding + matching against the real pgvector-backed
+catalog (src/core/indexing/store.py), populated by src/core/ingestion/*.
 """
 
 from __future__ import annotations
 
-import math
 from typing import Literal
 
 from fastapi import FastAPI
@@ -15,10 +12,10 @@ from pydantic import BaseModel
 
 from src.core.captioning.captioner import caption_audio, caption_image
 from src.core.embedding.embedder import embed_audio, embed_image, embed_text
-from src.core.embedding.fixtures import Fixture, build_catalog
+from src.core.indexing.store import Image, Song, get_connection, nearest_images, nearest_songs
 from src.core.media import download, transcode_to_wav
 
-app = FastAPI(title="Mood Matcher (dev)")
+app = FastAPI(title="Mood Matcher")
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,14 +23,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-_catalog: list[tuple[Fixture, list[float]]] = []
-
-
-@app.on_event("startup")
-def _startup() -> None:
-    global _catalog
-    _catalog = build_catalog()
 
 
 class SuggestionRequest(BaseModel):
@@ -81,13 +70,6 @@ class SuggestionResponse(BaseModel):
     nowPlaying: NowPlaying
 
 
-def _cosine(a: list[float], b: list[float]) -> float:
-    dot = sum(x * y for x, y in zip(a, b, strict=True))
-    norm_a = math.sqrt(sum(x * x for x in a))
-    norm_b = math.sqrt(sum(y * y for y in b))
-    return dot / (norm_a * norm_b) if norm_a and norm_b else 0.0
-
-
 def _caption_and_embed(request: SuggestionRequest) -> tuple[str, list[float]]:
     if request.inputMode == "text":
         return request.inputValue, embed_text(request.inputValue)
@@ -107,42 +89,56 @@ def _caption_and_embed(request: SuggestionRequest) -> tuple[str, list[float]]:
 def suggest(request: SuggestionRequest) -> SuggestionResponse:
     caption, query_embedding = _caption_and_embed(request)
 
-    ranked = sorted(_catalog, key=lambda item: _cosine(query_embedding, item[1]), reverse=True)
-    best_fixture, _ = ranked[0]
-    other_fixture, _ = ranked[1]
+    conn = get_connection()
+    top_songs = nearest_songs(conn, query_embedding, limit=3)
+    top_images = nearest_images(conn, query_embedding, limit=3)
 
-    attribution = Attribution(
-        creator=best_fixture.creator,
-        source=best_fixture.source,
-        license=best_fixture.license,
-        sourceUrl=best_fixture.source_url,
-    )
+    # pgvector's <=> is cosine *distance* — lower means more similar.
+    candidates: list[tuple[Song | Image, Literal["song", "image"]]] = [
+        (song, "song") for song in top_songs
+    ] + [(image, "image") for image in top_images]
+    candidates.sort(key=lambda pair: pair[0].distance)
+
+    best, best_kind = candidates[0]
+    related = candidates[1:4]
+
+    if best_kind == "song":
+        assert isinstance(best, Song)
+        attribution = Attribution(creator=best.artist, source="Jamendo", license=best.license, sourceUrl=best.url)
+        label = best.title
+    else:
+        assert isinstance(best, Image)
+        attribution = Attribution(creator=best.attribution, source="Openverse", license=best.license, sourceUrl=best.url)
+        label = best.title
+
+    now_playing_song = top_songs[0] if top_songs else None
 
     return SuggestionResponse(
         caption=caption,
-        matchedMedia=MatchedMedia(kind=best_fixture.kind, label=best_fixture.title),  # type: ignore[arg-type]
+        matchedMedia=MatchedMedia(kind=best_kind, label=label),
         searchSummary=", ".join(request.moodTags) or "No mood filters set",
         attribution=attribution,
         relatedMatches=[
             RelatedMatch(
-                id=other_fixture.id,
-                title=other_fixture.title,
-                creator=other_fixture.creator,
-                kind=other_fixture.kind,  # type: ignore[arg-type]
+                id=item.id,
+                title=item.title,
+                creator=item.artist if isinstance(item, Song) else item.attribution,
+                kind=kind,
             )
+            for item, kind in related
         ],
         nowPlaying=NowPlaying(
-            title="Test Tone",
-            artist="Synthesized locally",
-            album="Mood Matcher fixtures",
+            title=now_playing_song.title if now_playing_song else "—",
+            artist=now_playing_song.artist if now_playing_song else "—",
+            album="Mood Matcher catalog",
             currentTimeLabel="0:00",
-            durationLabel="0:02",
+            durationLabel="--:--",
             progressPercent=0,
             attribution=Attribution(
-                creator="Synthesized locally",
-                source="Local test asset",
-                license="No real track yet",
-                sourceUrl="",
+                creator=now_playing_song.artist if now_playing_song else "—",
+                source="Jamendo",
+                license=now_playing_song.license if now_playing_song else "",
+                sourceUrl=now_playing_song.url if now_playing_song else "",
             ),
         ),
     )

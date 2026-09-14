@@ -51,7 +51,7 @@ def main() -> None:
                     title=item["title"] or query,
                     url=item["foreign_landing_url"],
                     license=f"{item['license'].upper()} {item.get('license_version', '')}".strip(),
-                    attribution=item.get("attribution", f"{item.get('creator', 'Unknown')} via Openverse"),
+                    attribution=item.get("creator") or "Unknown",
                     embedding=embedding,
                 )
                 count += 1
