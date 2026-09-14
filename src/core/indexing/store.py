@@ -1,6 +1,5 @@
-"""Thin data-access layer over the songs/images tables (schema.sql). Replaces
-src/core/embedding/fixtures.py's in-memory catalog now that real ingestion exists — plain
-psycopg, no ORM, since two tables and four queries don't need one.
+"""Thin data-access layer over the songs/images tables (schema.sql). Plain psycopg, no ORM,
+since two tables and a handful of queries don't need one.
 """
 
 from __future__ import annotations
@@ -26,8 +25,9 @@ class Song:
     title: str
     artist: str
     url: str
+    asset_url: str | None
     license: str
-    distance: float
+    distance: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -35,9 +35,10 @@ class Image:
     id: str
     title: str
     url: str
+    asset_url: str | None
     license: str
     attribution: str
-    distance: float
+    distance: float = 0.0
 
 
 def upsert_song(
@@ -48,18 +49,20 @@ def upsert_song(
     title: str,
     artist: str,
     url: str,
+    asset_url: str,
     license: str,
     embedding: list[float],
 ) -> None:
     conn.execute(
         """
-        INSERT INTO songs (source, source_id, title, artist, url, license, embedding)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO songs (source, source_id, title, artist, url, asset_url, license, embedding)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT (source_id) DO UPDATE SET
             title = EXCLUDED.title, artist = EXCLUDED.artist, url = EXCLUDED.url,
-            license = EXCLUDED.license, embedding = EXCLUDED.embedding
+            asset_url = EXCLUDED.asset_url, license = EXCLUDED.license,
+            embedding = EXCLUDED.embedding
         """,
-        (source, source_id, title, artist, url, license, embedding),
+        (source, source_id, title, artist, url, asset_url, license, embedding),
     )
 
 
@@ -70,40 +73,56 @@ def upsert_image(
     source_id: str,
     title: str,
     url: str,
+    asset_url: str,
     license: str,
     attribution: str,
     embedding: list[float],
 ) -> None:
     conn.execute(
         """
-        INSERT INTO images (source, source_id, title, url, license, attribution, embedding)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO images (source, source_id, title, url, asset_url, license, attribution, embedding)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT (source_id) DO UPDATE SET
-            title = EXCLUDED.title, url = EXCLUDED.url, license = EXCLUDED.license,
-            attribution = EXCLUDED.attribution, embedding = EXCLUDED.embedding
+            title = EXCLUDED.title, url = EXCLUDED.url, asset_url = EXCLUDED.asset_url,
+            license = EXCLUDED.license, attribution = EXCLUDED.attribution,
+            embedding = EXCLUDED.embedding
         """,
-        (source, source_id, title, url, license, attribution, embedding),
+        (source, source_id, title, url, asset_url, license, attribution, embedding),
     )
 
 
 def nearest_songs(conn: psycopg.Connection, embedding: list[float], limit: int = 5) -> list[Song]:
     rows = conn.execute(
         """
-        SELECT id, title, artist, url, license, embedding <=> %s AS distance
+        SELECT id, title, artist, url, asset_url, license, embedding <=> %s AS distance
         FROM songs ORDER BY distance LIMIT %s
         """,
         (Vector(embedding), limit),
     ).fetchall()
-    return [Song(str(r[0]), r[1], r[2], r[3], r[4], r[5]) for r in rows]
+    return [Song(str(r[0]), r[1], r[2], r[3], r[4], r[5], r[6]) for r in rows]
 
 
 def nearest_images(conn: psycopg.Connection, embedding: list[float], limit: int = 5) -> list[Image]:
     rows = conn.execute(
         """
-        SELECT id, title, url, license, attribution, embedding <=> %s AS distance
+        SELECT id, title, url, asset_url, license, attribution, embedding <=> %s AS distance
         FROM images ORDER BY distance LIMIT %s
         """,
         (Vector(embedding), limit),
+    ).fetchall()
+    return [Image(str(r[0]), r[1], r[2], r[3], r[4], r[5], r[6]) for r in rows]
+
+
+def all_songs(conn: psycopg.Connection) -> list[Song]:
+    rows = conn.execute(
+        "SELECT id, title, artist, url, asset_url, license FROM songs ORDER BY created_at"
+    ).fetchall()
+    return [Song(str(r[0]), r[1], r[2], r[3], r[4], r[5]) for r in rows]
+
+
+def all_images(conn: psycopg.Connection) -> list[Image]:
+    rows = conn.execute(
+        "SELECT id, title, url, asset_url, license, attribution FROM images ORDER BY created_at"
     ).fetchall()
     return [Image(str(r[0]), r[1], r[2], r[3], r[4], r[5]) for r in rows]
 

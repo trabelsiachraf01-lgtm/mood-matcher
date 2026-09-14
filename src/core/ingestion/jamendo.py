@@ -7,6 +7,8 @@ Run: python -m src.core.ingestion.jamendo
 
 from __future__ import annotations
 
+import time
+
 import httpx
 
 from src.core.config import JAMENDO_CLIENT_ID
@@ -21,20 +23,29 @@ MOOD_TAGS = ["melancholy", "upbeat", "chill", "energetic", "cozy"]
 LIMIT = 5
 
 
-def fetch_tracks(client: httpx.Client, tag: str, limit: int) -> list[dict]:
-    response = client.get(
-        BASE_URL,
-        params={
-            "client_id": JAMENDO_CLIENT_ID,
-            "format": "json",
-            "limit": limit,
-            "tags": tag,
-            "include": "licenses",
-            "audioformat": "mp32",
-        },
-    )
-    response.raise_for_status()
-    return response.json()["results"]
+def fetch_tracks(client: httpx.Client, tag: str, limit: int, retries: int = 3) -> list[dict]:
+    # Jamendo's search intermittently returns results_count: 0 for a valid tag with no error
+    # (reproduced directly — same tag, same params, a moment later returns real results) —
+    # a plain retry works every time this has been observed.
+    for attempt in range(retries):
+        response = client.get(
+            BASE_URL,
+            params={
+                "client_id": JAMENDO_CLIENT_ID,
+                "format": "json",
+                "limit": limit,
+                "tags": tag,
+                "include": "licenses",
+                "audioformat": "mp32",
+            },
+        )
+        response.raise_for_status()
+        results = response.json()["results"]
+        if results:
+            return results
+        if attempt < retries - 1:
+            time.sleep(1.5)
+    return []
 
 
 def main() -> None:
@@ -63,6 +74,7 @@ def main() -> None:
                     title=item["name"],
                     artist=item["artist_name"],
                     url=item["shareurl"],
+                    asset_url=item["audio"],
                     license=item.get("license_ccurl", "CC"),
                     embedding=embedding,
                 )

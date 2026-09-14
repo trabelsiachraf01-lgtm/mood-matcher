@@ -1,6 +1,8 @@
--- Real ingestion catalog, replacing the in-memory fixture in src/core/embedding/fixtures.py.
--- Applied directly with psql — no ORM, no migration tool, since the schema is still this
--- small and this is the first real version of it.
+-- The real ingestion catalog. Applied directly with psql — no ORM, no migration tool, since
+-- the schema is still this small.
+--
+-- `url` is the source/landing page (for "View source" links); `asset_url` is the direct
+-- playable/viewable file (the raw image or audio stream) used for actually displaying it.
 
 CREATE EXTENSION IF NOT EXISTS vector;
 
@@ -11,6 +13,7 @@ CREATE TABLE IF NOT EXISTS songs (
     title TEXT NOT NULL,
     artist TEXT NOT NULL,
     url TEXT NOT NULL,
+    asset_url TEXT,
     license TEXT NOT NULL,
     embedding VECTOR(1024) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -22,6 +25,7 @@ CREATE TABLE IF NOT EXISTS images (
     source_id TEXT NOT NULL UNIQUE,
     title TEXT NOT NULL,
     url TEXT NOT NULL,
+    asset_url TEXT,
     license TEXT NOT NULL,
     attribution TEXT NOT NULL,
     embedding VECTOR(1024) NOT NULL,
