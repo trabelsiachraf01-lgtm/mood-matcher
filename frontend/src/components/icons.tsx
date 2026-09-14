@@ -97,3 +97,11 @@ export function PauseIcon({ className }: IconProps) {
     </svg>
   )
 }
+
+export function PlayIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M7 5.5v13l11-6.5-11-6.5z" />
+    </svg>
+  )
+}

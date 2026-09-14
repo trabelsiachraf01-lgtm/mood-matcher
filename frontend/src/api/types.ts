@@ -7,12 +7,10 @@ export type InputMode = 'image' | 'song' | 'text'
 export interface SuggestionRequest {
   /** Which of the three Step 1 input modes the user picked. */
   inputMode: InputMode
-  /**
-   * The raw input value. For `text` this is the mood description; for
-   * `song` it's the pasted link; for `image` it would be a file reference
-   * (kept as a string placeholder until upload is wired up).
-   */
-  inputValue: string
+  /** The mood description, when `inputMode` is `text`. */
+  text?: string
+  /** The uploaded image or audio file, when `inputMode` is `image` or `song`. */
+  file?: File
   /** Selected mood/style chips from Step 2, e.g. ["Melancholy", "Golden hour"]. */
   moodTags: string[]
   /** Energy slider value from Step 2, 0 (calm) to 100 (energetic). */
@@ -34,16 +32,16 @@ export interface RelatedMatch {
   title: string
   creator: string
   kind: MediaKind
+  /** Source/landing page — what "View source" style links point to. */
+  url: string
 }
 
 export interface NowPlaying {
   title: string
   artist: string
   album: string
-  currentTimeLabel: string
-  durationLabel: string
-  /** 0-100 playback progress. */
-  progressPercent: number
+  /** Direct, playable audio URL — real playback, not a mock. */
+  assetUrl: string
   attribution: Attribution
 }
 
@@ -52,6 +50,8 @@ export interface SuggestionResponse {
   matchedMedia: {
     kind: MediaKind
     label: string
+    /** Direct, viewable file — the real matched photo, or empty for a song match. */
+    assetUrl: string
   }
   /** Human-readable echo of the search inputs, e.g. "Melancholy, Golden hour". */
   searchSummary: string

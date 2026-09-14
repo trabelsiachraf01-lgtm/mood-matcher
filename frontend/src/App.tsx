@@ -25,7 +25,8 @@ function App() {
     try {
       const response = await getSuggestion({
         inputMode: wizardState.inputMode,
-        inputValue: wizardState.inputValue,
+        text: wizardState.text,
+        file: wizardState.file ?? undefined,
         moodTags: wizardState.moodTags,
         energy: wizardState.energy,
       })

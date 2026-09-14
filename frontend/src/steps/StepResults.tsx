@@ -20,7 +20,10 @@ export function StepResults({ result, onBack }: StepResultsProps) {
       </button>
 
       <div className="mt-6">
-        <HeroIllustration label={result.matchedMedia.label} />
+        <HeroIllustration
+          label={result.matchedMedia.label}
+          imageUrl={result.matchedMedia.kind === 'image' ? result.matchedMedia.assetUrl : undefined}
+        />
       </div>
 
       <p className="mt-6 font-mono text-xs uppercase tracking-wide text-ink-dim">
@@ -53,7 +56,9 @@ export function StepResults({ result, onBack }: StepResultsProps) {
             return (
               <a
                 key={match.id}
-                href="#"
+                href={match.url}
+                target="_blank"
+                rel="noreferrer"
                 className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:border-ink-dim"
               >
                 <div

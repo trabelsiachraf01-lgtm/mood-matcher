@@ -4,15 +4,20 @@ const API_BASE_URL = 'http://localhost:8000'
 
 /**
  * Fetches a cross-modal mood match for the given request from the real backend
- * (src/api/app.py). That backend currently matches against a 2-item in-memory
- * catalog — one image, one placeholder song — since the real ingestion
- * pipeline doesn't exist yet; captioning and embedding themselves are real.
+ * (src/api/app.py), matched against the real pgvector catalog. Sent as
+ * multipart form data — text mode sends `text`, image/song mode sends `file`.
  */
 export async function getSuggestion(request: SuggestionRequest): Promise<SuggestionResponse> {
+  const form = new FormData()
+  form.set('inputMode', request.inputMode)
+  form.set('moodTags', request.moodTags.join(','))
+  form.set('energy', String(request.energy))
+  if (request.text) form.set('text', request.text)
+  if (request.file) form.set('file', request.file)
+
   const response = await fetch(`${API_BASE_URL}/suggestions`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request),
+    body: form,
   })
 
   if (!response.ok) {

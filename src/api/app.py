@@ -1,19 +1,24 @@
 """The real API: captioning + embedding + matching against the real pgvector-backed
 catalog (src/core/indexing/store.py), populated by src/core/ingestion/*.
+
+Takes multipart form data, not JSON — image/song modes upload a real file (no URL involved).
 """
 
 from __future__ import annotations
 
+import base64
+import tempfile
+from pathlib import Path
 from typing import Literal
 
-from fastapi import FastAPI
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from src.core.captioning.captioner import caption_audio, caption_image
 from src.core.embedding.embedder import embed_audio, embed_image, embed_text
 from src.core.indexing.store import Image, Song, get_connection, nearest_images, nearest_songs
-from src.core.media import download, transcode_to_wav
+from src.core.media import transcode_to_wav
 
 app = FastAPI(title="Mood Matcher")
 
@@ -23,13 +28,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-class SuggestionRequest(BaseModel):
-    inputMode: Literal["image", "song", "text"]
-    inputValue: str
-    moodTags: list[str] = []
-    energy: int = 50
 
 
 class Attribution(BaseModel):
@@ -42,6 +40,7 @@ class Attribution(BaseModel):
 class MatchedMedia(BaseModel):
     kind: Literal["image", "song"]
     label: str
+    assetUrl: str
 
 
 class RelatedMatch(BaseModel):
@@ -49,15 +48,14 @@ class RelatedMatch(BaseModel):
     title: str
     creator: str
     kind: Literal["image", "song"]
+    url: str
 
 
 class NowPlaying(BaseModel):
     title: str
     artist: str
     album: str
-    currentTimeLabel: str
-    durationLabel: str
-    progressPercent: int
+    assetUrl: str
     attribution: Attribution
 
 
@@ -70,24 +68,43 @@ class SuggestionResponse(BaseModel):
     nowPlaying: NowPlaying
 
 
-def _caption_and_embed(request: SuggestionRequest) -> tuple[str, list[float]]:
-    if request.inputMode == "text":
-        return request.inputValue, embed_text(request.inputValue)
+def _caption_and_embed(
+    input_mode: Literal["image", "song", "text"], text: str, file: UploadFile | None
+) -> tuple[str, list[float]]:
+    if input_mode == "text":
+        return text, embed_text(text)
 
-    if request.inputMode == "image":
-        caption = caption_image(request.inputValue)
-        image_path = download(request.inputValue, ".jpg")
-        return caption, embed_image(str(image_path))
+    if file is None:
+        raise HTTPException(status_code=400, detail=f"No file uploaded for inputMode={input_mode}")
 
-    audio_path = download(request.inputValue, ".mp3")
-    caption = caption_audio(audio_path.read_bytes(), audio_format="mp3")
-    wav_path = transcode_to_wav(audio_path)
+    contents = file.file.read()
+    default_suffix = ".jpg" if input_mode == "image" else ".mp3"
+    suffix = Path(file.filename or "").suffix or default_suffix
+    tmp_path = Path(tempfile.mktemp(suffix=suffix))
+    tmp_path.write_bytes(contents)
+
+    if input_mode == "image":
+        mime_type = file.content_type or "image/jpeg"
+        data_url = f"data:{mime_type};base64,{base64.b64encode(contents).decode()}"
+        caption = caption_image(data_url)
+        return caption, embed_image(str(tmp_path))
+
+    audio_format = suffix.lstrip(".") or "mp3"
+    caption = caption_audio(contents, audio_format=audio_format)
+    wav_path = transcode_to_wav(tmp_path)
     return caption, embed_audio(str(wav_path))
 
 
 @app.post("/suggestions")
-def suggest(request: SuggestionRequest) -> SuggestionResponse:
-    caption, query_embedding = _caption_and_embed(request)
+def suggest(
+    inputMode: Literal["image", "song", "text"] = Form(...),
+    text: str = Form(""),
+    moodTags: str = Form(""),
+    energy: int = Form(50),
+    file: UploadFile | None = File(None),
+) -> SuggestionResponse:
+    mood_tags = [tag for tag in moodTags.split(",") if tag]
+    caption, query_embedding = _caption_and_embed(inputMode, text, file)
 
     conn = get_connection()
     top_songs = nearest_songs(conn, query_embedding, limit=3)
@@ -115,8 +132,8 @@ def suggest(request: SuggestionRequest) -> SuggestionResponse:
 
     return SuggestionResponse(
         caption=caption,
-        matchedMedia=MatchedMedia(kind=best_kind, label=label),
-        searchSummary=", ".join(request.moodTags) or "No mood filters set",
+        matchedMedia=MatchedMedia(kind=best_kind, label=label, assetUrl=best.asset_url or ""),
+        searchSummary=", ".join(mood_tags) or "No mood filters set",
         attribution=attribution,
         relatedMatches=[
             RelatedMatch(
@@ -124,6 +141,7 @@ def suggest(request: SuggestionRequest) -> SuggestionResponse:
                 title=item.title,
                 creator=item.artist if isinstance(item, Song) else item.attribution,
                 kind=kind,
+                url=item.url,
             )
             for item, kind in related
         ],
@@ -131,9 +149,7 @@ def suggest(request: SuggestionRequest) -> SuggestionResponse:
             title=now_playing_song.title if now_playing_song else "—",
             artist=now_playing_song.artist if now_playing_song else "—",
             album="Mood Matcher catalog",
-            currentTimeLabel="0:00",
-            durationLabel="--:--",
-            progressPercent=0,
+            assetUrl=(now_playing_song.asset_url or "") if now_playing_song else "",
             attribution=Attribution(
                 creator=now_playing_song.artist if now_playing_song else "—",
                 source="Jamendo",

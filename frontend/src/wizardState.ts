@@ -2,7 +2,8 @@ import type { InputMode } from './api/types'
 
 export interface WizardState {
   inputMode: InputMode
-  inputValue: string
+  text: string
+  file: File | null
   moodTags: string[]
   energy: number
 }
@@ -11,7 +12,8 @@ export const INITIAL_MOOD_TAGS = ['Melancholy', 'Golden hour', 'Nostalgic', 'Chi
 
 export const initialWizardState: WizardState = {
   inputMode: 'text',
-  inputValue: 'golden hour, empty highway, a little wistful',
+  text: 'golden hour, empty highway, a little wistful',
+  file: null,
   moodTags: ['Melancholy', 'Golden hour'],
   energy: 32,
 }
