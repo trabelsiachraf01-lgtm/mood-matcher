@@ -7,12 +7,8 @@ before building that pipeline, not to be a real product backend.
 from __future__ import annotations
 
 import math
-import subprocess
-import tempfile
-from pathlib import Path
 from typing import Literal
 
-import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -20,6 +16,7 @@ from pydantic import BaseModel
 from src.core.captioning.captioner import caption_audio, caption_image
 from src.core.embedding.embedder import embed_audio, embed_image, embed_text
 from src.core.embedding.fixtures import Fixture, build_catalog
+from src.core.media import download, transcode_to_wav
 
 app = FastAPI(title="Mood Matcher (dev)")
 
@@ -84,27 +81,6 @@ class SuggestionResponse(BaseModel):
     nowPlaying: NowPlaying
 
 
-def _download(url: str, suffix: str) -> Path:
-    response = httpx.get(url, timeout=30.0, follow_redirects=True)
-    response.raise_for_status()
-    path = Path(tempfile.mktemp(suffix=suffix))
-    path.write_bytes(response.content)
-    return path
-
-
-def _transcode_to_wav(path: Path) -> Path:
-    # torchcodec (ebind's audio decoder) is stricter than the ffmpeg CLI about malformed
-    # tails/padding in arbitrary downloaded audio — normalizing to a clean WAV first avoids
-    # relying on it to tolerate every format/quirk a pasted URL might have.
-    wav_path = path.with_suffix(".wav")
-    subprocess.run(
-        ["ffmpeg", "-y", "-i", str(path), "-ar", "16000", "-ac", "1", str(wav_path)],
-        check=True,
-        capture_output=True,
-    )
-    return wav_path
-
-
 def _cosine(a: list[float], b: list[float]) -> float:
     dot = sum(x * y for x, y in zip(a, b, strict=True))
     norm_a = math.sqrt(sum(x * x for x in a))
@@ -118,12 +94,12 @@ def _caption_and_embed(request: SuggestionRequest) -> tuple[str, list[float]]:
 
     if request.inputMode == "image":
         caption = caption_image(request.inputValue)
-        image_path = _download(request.inputValue, ".jpg")
+        image_path = download(request.inputValue, ".jpg")
         return caption, embed_image(str(image_path))
 
-    audio_path = _download(request.inputValue, ".mp3")
+    audio_path = download(request.inputValue, ".mp3")
     caption = caption_audio(audio_path.read_bytes(), audio_format="mp3")
-    wav_path = _transcode_to_wav(audio_path)
+    wav_path = transcode_to_wav(audio_path)
     return caption, embed_audio(str(wav_path))
 
 
