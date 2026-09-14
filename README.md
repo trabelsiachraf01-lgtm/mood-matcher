@@ -2,7 +2,7 @@
 
 Give it an image, a song, or a line of text describing a mood, and get back a generated
 caption plus a real matched song/image — with attribution and a link to the real source,
-never AI-generated media. See [CLAUDE.md](./CLAUDE.md) for the design and ground rules.
+never AI-generated media.
 
 Cross-modal matching runs on [EBind](https://github.com/encord-team/ebind); captioning runs
 on Qwen3-VL and Gemini Flash via OpenRouter. There's no real catalog yet — the backend
@@ -61,4 +61,4 @@ non-musical) tone to match against. Next step replaces that with a real catalog:
   cosine-similarity query against that store.
 
 No migrations, no ORM layer, no ingestion abstractions until this is actually being built —
-see the ground rules in `CLAUDE.md` for why.
+build one slice at a time, prove it works, then move on.
