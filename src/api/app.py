@@ -20,7 +20,7 @@ from src.core.embedding.embedder import embed_audio, embed_image, embed_text
 from src.core.indexing.store import Image, Song, get_connection, nearest_images, nearest_songs
 from src.core.media import transcode_to_wav
 
-app = FastAPI(title="Mood Matcher")
+app = FastAPI(title="Hushtone")
 
 app.add_middleware(
     CORSMiddleware,
@@ -148,7 +148,7 @@ def suggest(
         nowPlaying=NowPlaying(
             title=now_playing_song.title if now_playing_song else "—",
             artist=now_playing_song.artist if now_playing_song else "—",
-            album="Mood Matcher catalog",
+            album="Hushtone catalog",
             assetUrl=(now_playing_song.asset_url or "") if now_playing_song else "",
             attribution=Attribution(
                 creator=now_playing_song.artist if now_playing_song else "—",

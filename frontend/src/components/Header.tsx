@@ -10,7 +10,7 @@ const TOTAL_STEPS = 3
 export function Header({ currentStep }: HeaderProps) {
   return (
     <header className="flex items-center justify-between py-6">
-      <span className="font-display text-lg font-bold text-ink">Mood Matcher</span>
+      <span className="font-display text-lg font-bold text-ink">Hushtone</span>
       <div className="flex items-center">
         {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((step, i) => (
           <div key={step} className="flex items-center">

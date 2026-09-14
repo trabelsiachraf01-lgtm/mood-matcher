@@ -1,4 +1,4 @@
-# Mood Matcher
+# Hushtone
 
 Cross-modal mood-matching app — an image, a song, or text in; a generated caption plus a
 real matched song/image out. See `README.md` for setup and run steps.

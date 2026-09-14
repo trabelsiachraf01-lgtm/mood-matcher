@@ -1,4 +1,4 @@
-# Mood Matcher
+# Hushtone
 
 Give it an image, a song, or a line of text describing a mood, and get back a generated
 caption plus a real matched song/image — with attribution and a link to the real source,
