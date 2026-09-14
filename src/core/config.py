@@ -19,3 +19,9 @@ AUDIO_MODEL = os.environ.get("AUDIO_MODEL", "google/gemini-2.5-flash")
 
 EBIND_MODEL_ID = os.environ.get("EBIND_MODEL_ID", "encord-team/ebind-full")
 
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL", "postgresql://mood_matcher:mood_matcher@localhost:5432/mood_matcher"
+)
+
+JAMENDO_CLIENT_ID = os.environ.get("JAMENDO_CLIENT_ID")
+
