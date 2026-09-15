@@ -20,14 +20,6 @@ class MatchedMedia(BaseModel):
     assetUrl: str
 
 
-class RelatedMatch(BaseModel):
-    id: str
-    title: str
-    creator: str
-    kind: Literal["image", "song"]
-    url: str
-
-
 class NowPlaying(BaseModel):
     title: str
     artist: str
@@ -40,5 +32,4 @@ class SuggestionResponse(BaseModel):
     caption: str
     matchedMedia: MatchedMedia
     attribution: Attribution
-    relatedMatches: list[RelatedMatch]
     nowPlaying: NowPlaying
