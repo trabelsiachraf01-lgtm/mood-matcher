@@ -19,11 +19,13 @@ export function NowPlayingBar({ nowPlaying }: NowPlayingBarProps) {
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
 
-  // A new match means a new track — reset playback state instead of carrying the old one over.
+  // A new match means a new track — reset playback state and start it, like background
+  // music picking up as soon as the result is in.
   useEffect(() => {
     setIsPlaying(false)
     setCurrentTime(0)
     setDuration(0)
+    void audioRef.current?.play()
   }, [nowPlaying.assetUrl])
 
   function togglePlayback() {
@@ -34,6 +36,12 @@ export function NowPlayingBar({ nowPlaying }: NowPlayingBarProps) {
     } else {
       void audio.play()
     }
+  }
+
+  function seekBy(seconds: number) {
+    const audio = audioRef.current
+    if (!audio) return
+    audio.currentTime = Math.min(Math.max(audio.currentTime + seconds, 0), duration || Infinity)
   }
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0
@@ -62,15 +70,37 @@ export function NowPlayingBar({ nowPlaying }: NowPlayingBarProps) {
         </p>
       </div>
 
-      <button
-        type="button"
-        onClick={togglePlayback}
-        disabled={!nowPlaying.assetUrl}
-        aria-label={isPlaying ? 'Pause' : 'Play'}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-teal-fg text-teal-bg disabled:opacity-40"
-      >
-        {isPlaying ? <PauseIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
-      </button>
+      <div className="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={() => seekBy(-10)}
+          disabled={!nowPlaying.assetUrl}
+          aria-label="Back 10 seconds"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-white/70 hover:text-white disabled:opacity-40"
+        >
+          <span className="font-mono text-[10px]">−10</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={togglePlayback}
+          disabled={!nowPlaying.assetUrl}
+          aria-label={isPlaying ? 'Pause' : 'Play'}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-fg text-teal-bg disabled:opacity-40"
+        >
+          {isPlaying ? <PauseIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => seekBy(10)}
+          disabled={!nowPlaying.assetUrl}
+          aria-label="Forward 10 seconds"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-white/70 hover:text-white disabled:opacity-40"
+        >
+          <span className="font-mono text-[10px]">+10</span>
+        </button>
+      </div>
 
       <div className="hidden flex-1 items-center gap-2 sm:flex">
         <span className="font-mono text-xs text-white/60">{formatTime(currentTime)}</span>
