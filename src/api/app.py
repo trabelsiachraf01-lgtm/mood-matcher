@@ -27,10 +27,7 @@ app.add_middleware(
 def suggest(
     inputMode: Literal["image", "song", "text"] = Form(...),
     text: str = Form(""),
-    moodTags: str = Form(""),
-    energy: int = Form(50),
     file: UploadFile | None = File(None),
 ) -> SuggestionResponse:
     service = SuggestionService(CatalogRepository(get_connection()))
-    mood_tags = [tag for tag in moodTags.split(",") if tag]
-    return service.suggest(input_mode=inputMode, text=text, mood_tags=mood_tags, file=file)
+    return service.suggest(input_mode=inputMode, text=text, file=file)

@@ -5,16 +5,12 @@
 export type InputMode = 'image' | 'song' | 'text'
 
 export interface SuggestionRequest {
-  /** Which of the three Step 1 input modes the user picked. */
+  /** Which input mode the user picked. */
   inputMode: InputMode
   /** The mood description, when `inputMode` is `text`. */
   text?: string
   /** The uploaded image or audio file, when `inputMode` is `image` or `song`. */
   file?: File
-  /** Selected mood/style chips from Step 2, e.g. ["Melancholy", "Golden hour"]. */
-  moodTags: string[]
-  /** Energy slider value from Step 2, 0 (calm) to 100 (energetic). */
-  energy: number
 }
 
 export type MediaKind = 'image' | 'song'
@@ -53,8 +49,6 @@ export interface SuggestionResponse {
     /** Direct, viewable file — the real matched photo, or empty for a song match. */
     assetUrl: string
   }
-  /** Human-readable echo of the search inputs, e.g. "Melancholy, Golden hour". */
-  searchSummary: string
   attribution: Attribution
   relatedMatches: RelatedMatch[]
   nowPlaying: NowPlaying

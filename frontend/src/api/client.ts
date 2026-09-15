@@ -10,8 +10,6 @@ const API_BASE_URL = 'http://localhost:8000'
 export async function getSuggestion(request: SuggestionRequest): Promise<SuggestionResponse> {
   const form = new FormData()
   form.set('inputMode', request.inputMode)
-  form.set('moodTags', request.moodTags.join(','))
-  form.set('energy', String(request.energy))
   if (request.text) form.set('text', request.text)
   if (request.file) form.set('file', request.file)
 

@@ -21,9 +21,7 @@ class SuggestionService:
         self._repository = repository
         self._analyzer = analyzer or MoodAnalyzer()
 
-    def suggest(
-        self, *, input_mode: InputMode, text: str, mood_tags: list[str], file: UploadFile | None
-    ) -> SuggestionResponse:
+    def suggest(self, *, input_mode: InputMode, text: str, file: UploadFile | None) -> SuggestionResponse:
         analysis = self._analyzer.analyze(input_mode, text, file)
         candidates = self._rank_candidates(analysis.embedding)
 
@@ -34,7 +32,6 @@ class SuggestionService:
         return SuggestionResponse(
             caption=analysis.caption,
             matchedMedia=MatchedMedia(kind=best_kind, label=best.title, assetUrl=best.asset_url or ""),
-            searchSummary=", ".join(mood_tags) or "No mood filters set",
             attribution=self._attribution_for(best, best_kind),
             relatedMatches=[
                 RelatedMatch(id=item.id, title=item.title, creator=self._creator(item), kind=kind, url=item.url)

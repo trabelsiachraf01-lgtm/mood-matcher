@@ -2,10 +2,10 @@ import { CheckIcon } from './icons'
 
 interface HeaderProps {
   /** 1-indexed current step. */
-  currentStep: 1 | 2 | 3
+  currentStep: 1 | 2
 }
 
-const TOTAL_STEPS = 3
+const TOTAL_STEPS = 2
 
 export function Header({ currentStep }: HeaderProps) {
   return (

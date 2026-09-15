@@ -10,7 +10,7 @@ interface StepResultsProps {
 export function StepResults({ result, onBack }: StepResultsProps) {
   return (
     <div className="pb-8">
-      <p className="font-mono text-xs uppercase tracking-wide text-ink-dim">Step 3 of 3</p>
+      <p className="font-mono text-xs uppercase tracking-wide text-ink-dim">Step 2 of 2</p>
       <button
         type="button"
         onClick={onBack}
@@ -26,11 +26,7 @@ export function StepResults({ result, onBack }: StepResultsProps) {
         />
       </div>
 
-      <p className="mt-6 font-mono text-xs uppercase tracking-wide text-ink-dim">
-        From your search · {result.searchSummary}
-      </p>
-
-      <p className="mt-3 font-display text-2xl italic leading-snug text-ink">
+      <p className="mt-6 font-display text-2xl italic leading-snug text-ink">
         &ldquo;{result.caption}&rdquo;
       </p>
 

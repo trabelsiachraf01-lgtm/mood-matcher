@@ -8,6 +8,8 @@ interface StepInputProps {
   state: WizardState
   onChange: (patch: Partial<WizardState>) => void
   onContinue: () => void
+  isLoading: boolean
+  error: string | null
 }
 
 const MODES: { mode: InputMode; label: string; Icon: typeof ImageIcon; accept: string }[] = [
@@ -16,7 +18,7 @@ const MODES: { mode: InputMode; label: string; Icon: typeof ImageIcon; accept: s
   { mode: 'text', label: 'Mood', Icon: TextLinesIcon, accept: '' },
 ]
 
-export function StepInput({ state, onChange, onContinue }: StepInputProps) {
+export function StepInput({ state, onChange, onContinue, isLoading, error }: StepInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const activeMode = MODES.find((m) => m.mode === state.inputMode) ?? MODES[2]
   const canContinue = state.inputMode === 'text' ? state.text.trim().length > 0 : state.file !== null
@@ -32,7 +34,7 @@ export function StepInput({ state, onChange, onContinue }: StepInputProps) {
 
   return (
     <div>
-      <p className="font-mono text-xs uppercase tracking-wide text-ink-dim">Step 1 of 3</p>
+      <p className="font-mono text-xs uppercase tracking-wide text-ink-dim">Step 1 of 2</p>
       <h1 className="mt-2 font-display text-3xl font-bold text-ink">
         What&apos;s your starting point?
       </h1>
@@ -96,9 +98,11 @@ export function StepInput({ state, onChange, onContinue }: StepInputProps) {
         </div>
       )}
 
+      {error && <p className="mt-4 font-body text-sm text-coral">{error}</p>}
+
       <div className="mt-8 flex justify-end">
-        <Button onClick={onContinue} disabled={!canContinue}>
-          Continue
+        <Button onClick={onContinue} disabled={!canContinue || isLoading}>
+          {isLoading ? 'Finding your match…' : 'Continue'}
         </Button>
       </div>
     </div>

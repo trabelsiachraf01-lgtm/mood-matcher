@@ -39,7 +39,6 @@ class NowPlaying(BaseModel):
 class SuggestionResponse(BaseModel):
     caption: str
     matchedMedia: MatchedMedia
-    searchSummary: str
     attribution: Attribution
     relatedMatches: list[RelatedMatch]
     nowPlaying: NowPlaying
