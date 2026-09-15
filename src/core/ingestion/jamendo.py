@@ -13,7 +13,7 @@ import httpx
 
 from src.core.config import JAMENDO_CLIENT_ID
 from src.core.embedding.embedder import embed_audio
-from src.core.indexing.store import get_connection, upsert_song
+from src.core.indexing.store import CatalogRepository, get_connection
 from src.core.media import download, transcode_to_wav
 
 BASE_URL = "https://api.jamendo.com/v3.0/tracks"
@@ -52,7 +52,7 @@ def main() -> None:
     if not JAMENDO_CLIENT_ID:
         raise RuntimeError("JAMENDO_CLIENT_ID is not set — get a free one at devportal.jamendo.com")
 
-    conn = get_connection()
+    repo = CatalogRepository(get_connection())
 
     with httpx.Client(timeout=30.0) as client:
         for tag in MOOD_TAGS:
@@ -67,8 +67,7 @@ def main() -> None:
                     print(f"  skip {item['id']}: {exc}")
                     continue
 
-                upsert_song(
-                    conn,
+                repo.upsert_song(
                     source="jamendo",
                     source_id=str(item["id"]),
                     title=item["name"],

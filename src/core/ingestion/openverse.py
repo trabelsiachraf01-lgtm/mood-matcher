@@ -10,7 +10,7 @@ from __future__ import annotations
 import httpx
 
 from src.core.embedding.embedder import embed_image
-from src.core.indexing.store import get_connection, upsert_image
+from src.core.indexing.store import CatalogRepository, get_connection
 from src.core.media import download
 
 BASE_URL = "https://api.openverse.org/v1/images/"
@@ -30,7 +30,7 @@ def fetch_images(client: httpx.Client, query: str, page_size: int) -> list[dict]
 
 
 def main() -> None:
-    conn = get_connection()
+    repo = CatalogRepository(get_connection())
 
     with httpx.Client(timeout=30.0) as client:
         for query in MOOD_QUERIES:
@@ -44,8 +44,7 @@ def main() -> None:
                     print(f"  skip {item['id']}: {exc}")
                     continue
 
-                upsert_image(
-                    conn,
+                repo.upsert_image(
                     source="openverse",
                     source_id=item["id"],
                     title=item["title"] or query,
