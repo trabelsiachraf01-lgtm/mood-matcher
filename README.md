@@ -5,9 +5,14 @@ caption plus a real matched song/image — with attribution and a link to the re
 never AI-generated media.
 
 Cross-modal matching runs on [EBind](https://github.com/encord-team/ebind); captioning runs
-on Qwen3-VL and Gemini Flash via OpenRouter; the catalog is real Creative-Commons tracks from
-**Jamendo** and CC-licensed/public-domain images from **Openverse**, embedded and stored in
-**Postgres + pgvector**.
+on Gemini Flash-Lite via OpenRouter (picked by benchmarking against a few alternatives —
+see `VISION_MODEL`/`AUDIO_MODEL` in `src/core/config.py`); the catalog is real
+Creative-Commons tracks from **Jamendo** and CC-licensed/public-domain images from
+**Openverse**, embedded and stored in **Postgres + pgvector**. Every match always comes back
+with both a real image and a real song, regardless of what you searched with.
+
+Every request logs how long captioning, embedding, and (for audio) transcoding each took, plus
+the winning match's distance score — check the backend's stdout.
 
 ## Run it locally
 
