@@ -1,6 +1,5 @@
 import type { SuggestionResponse } from '../api/types'
 import { HeroIllustration } from '../components/HeroIllustration'
-import { SunIcon, WaveformIcon } from '../components/icons'
 
 interface StepResultsProps {
   result: SuggestionResponse
@@ -22,6 +21,8 @@ export function StepResults({ result, onBack }: StepResultsProps) {
       <div className="mt-6">
         <HeroIllustration
           label={result.matchedMedia.label}
+          creator={result.attribution.creator}
+          source={result.attribution.source}
           imageUrl={result.matchedMedia.kind === 'image' ? result.matchedMedia.assetUrl : undefined}
         />
       </div>
@@ -31,7 +32,7 @@ export function StepResults({ result, onBack }: StepResultsProps) {
       </p>
 
       <p className="mt-4 font-body text-sm text-ink-dim">
-        {result.attribution.creator} · {result.attribution.source} · {result.attribution.license}{' '}
+        {result.attribution.license}{' '}
         <a
           href={result.attribution.sourceUrl}
           target="_blank"
@@ -41,42 +42,6 @@ export function StepResults({ result, onBack }: StepResultsProps) {
           View source →
         </a>
       </p>
-
-      <hr className="mt-8 border-border" />
-
-      <div className="mt-6">
-        <h2 className="font-body text-sm font-semibold text-ink">Related matches</h2>
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {result.relatedMatches.map((match) => {
-            const isImage = match.kind === 'image'
-            return (
-              <a
-                key={match.id}
-                href={match.url}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:border-ink-dim"
-              >
-                <div
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-                    isImage ? 'bg-tint-coral' : 'bg-teal-bg'
-                  }`}
-                >
-                  {isImage ? (
-                    <SunIcon className="h-5 w-5 text-coral-hover" />
-                  ) : (
-                    <WaveformIcon className="h-5 w-5 text-teal-fg" />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate font-body text-sm font-medium text-ink">{match.title}</p>
-                  <p className="truncate font-body text-xs text-ink-dim">{match.creator}</p>
-                </div>
-              </a>
-            )
-          })}
-        </div>
-      </div>
     </div>
   )
 }

@@ -23,15 +23,6 @@ export interface Attribution {
   sourceUrl: string
 }
 
-export interface RelatedMatch {
-  id: string
-  title: string
-  creator: string
-  kind: MediaKind
-  /** Source/landing page — what "View source" style links point to. */
-  url: string
-}
-
 export interface NowPlaying {
   title: string
   artist: string
@@ -50,6 +41,5 @@ export interface SuggestionResponse {
     assetUrl: string
   }
   attribution: Attribution
-  relatedMatches: RelatedMatch[]
   nowPlaying: NowPlaying
 }
