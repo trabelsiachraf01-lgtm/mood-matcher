@@ -8,7 +8,10 @@ import base64
 from src.core.clients.openrouter import chat
 from src.core.config import AUDIO_MODEL, VISION_MODEL
 
-_MOOD_PROMPT = "Describe the mood and feel of this in one or two sentences."
+_MOOD_PROMPT = (
+    "In one vivid sentence, describe the mood and atmosphere this evokes — the feeling, "
+    "not a literal list of what's in it. No preamble, just the sentence."
+)
 
 
 def caption_image(image_url: str) -> str:

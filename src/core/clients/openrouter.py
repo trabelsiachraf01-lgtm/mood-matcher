@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import httpx
 
-from src.core.config import OPENROUTER_API_KEY, OPENROUTER_API_BASE
+from src.core.config import LLM_TIMEOUT_SECONDS, OPENROUTER_API_KEY, OPENROUTER_API_BASE
 
 _BASE_URL = OPENROUTER_API_BASE
 
@@ -17,7 +17,7 @@ def chat(model: str, content: list[dict]) -> str:
         _BASE_URL,
         headers={"Authorization": f"Bearer {OPENROUTER_API_KEY}"},
         json={"model": model, "messages": [{"role": "user", "content": content}]},
-        timeout=60.0,
+        timeout=LLM_TIMEOUT_SECONDS,
     )
     response.raise_for_status()
     return response.json()["choices"][0]["message"]["content"]

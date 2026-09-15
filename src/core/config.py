@@ -14,10 +14,15 @@ OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 OPENROUTER_API_BASE = os.environ.get("OPENROUTER_API_BASE", "https://openrouter.ai/api/v1/chat/completions")
 
 
-VISION_MODEL = os.environ.get("VISION_MODEL", "qwen/qwen3-vl-32b-instruct")
-AUDIO_MODEL = os.environ.get("AUDIO_MODEL", "google/gemini-2.5-flash")
+VISION_MODEL = os.environ.get("VISION_MODEL", "google/gemini-3.5-flash-lite")
+AUDIO_MODEL = os.environ.get("AUDIO_MODEL", "google/gemini-3.5-flash-lite")
 
 EBIND_MODEL_ID = os.environ.get("EBIND_MODEL_ID", "encord-team/ebind-full")
+
+# Hard caps so one slow OpenRouter call or a stuck local inference can't hang a request
+# forever — /suggestions fails fast with a 504 instead.
+LLM_TIMEOUT_SECONDS = float(os.environ.get("LLM_TIMEOUT_SECONDS", "20"))
+EMBED_TIMEOUT_SECONDS = float(os.environ.get("EMBED_TIMEOUT_SECONDS", "15"))
 
 DATABASE_URL = os.environ.get(
     "DATABASE_URL", "postgresql://mood_matcher:mood_matcher@localhost:5432/mood_matcher"

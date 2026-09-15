@@ -10,6 +10,7 @@ from pathlib import Path
 
 import httpx
 
+TRANSCODE_TIMEOUT_SECONDS = 30.0
 
 _HEADERS = {
     # Some CDNs (Flickr's included) block httpx's default User-Agent outright — any normal
@@ -35,5 +36,6 @@ def transcode_to_wav(path: Path) -> Path:
         ["ffmpeg", "-y", "-i", str(path), "-ar", "16000", "-ac", "1", str(wav_path)],
         check=True,
         capture_output=True,
+        timeout=TRANSCODE_TIMEOUT_SECONDS,
     )
     return wav_path
