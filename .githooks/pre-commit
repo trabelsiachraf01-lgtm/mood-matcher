@@ -27,11 +27,15 @@ if [ -n "$py_files" ] && [ -x "$ruff_bin" ]; then
     }
 fi
 
-# 3. If any frontend source is staged, the frontend must still typecheck.
+# 3. If any frontend source is staged, it must typecheck and lint clean.
 fe_files=$(echo "$staged_files" | grep '^frontend/src/.*\.tsx\?$')
 if [ -n "$fe_files" ] && [ -d "$repo_root/frontend/node_modules" ]; then
     (cd "$repo_root/frontend" && npx tsc --noEmit) || {
         echo "pre-commit hook: rejected — frontend fails to typecheck" >&2
+        fail=1
+    }
+    (cd "$repo_root/frontend" && npx oxlint) || {
+        echo "pre-commit hook: rejected — oxlint found issues in the frontend" >&2
         fail=1
     }
 fi
