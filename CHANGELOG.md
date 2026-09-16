@@ -1,0 +1,6 @@
+# Changelog
+
+Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning:
+[SemVer](https://semver.org/) (`MAJOR.MINOR.PATCH`, tracked in `pyproject.toml`).
+
+## [Unreleased]

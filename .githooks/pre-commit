@@ -1,0 +1,39 @@
+#!/bin/sh
+# Fast, local checks on staged changes only — no network calls, no model loading
+# (this project's own tests hit real APIs/models and are explicitly not fast — see README).
+# Installed locally at .git/hooks/pre-commit; this tracked copy is for re-installing
+# after a fresh clone (see README's "Git hooks" section).
+
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root" || exit 1
+
+staged_files=$(git diff --cached --name-only --diff-filter=ACM)
+fail=0
+
+# 1. Never let a real .env slip in.
+echo "$staged_files" | grep -qE '(^|/)\.env$' && {
+    echo "pre-commit hook: rejected — .env is staged (secrets belong in .env, never in git)" >&2
+    fail=1
+}
+
+# 2. Staged Python files must lint clean (ruff covers syntax errors too).
+ruff_bin="$repo_root/.venv/bin/ruff"
+py_files=$(echo "$staged_files" | grep '\.py$')
+if [ -n "$py_files" ] && [ -x "$ruff_bin" ]; then
+    # shellcheck disable=SC2086
+    "$ruff_bin" check $py_files || {
+        echo "pre-commit hook: rejected — ruff found issues in staged Python files" >&2
+        fail=1
+    }
+fi
+
+# 3. If any frontend source is staged, the frontend must still typecheck.
+fe_files=$(echo "$staged_files" | grep '^frontend/src/.*\.tsx\?$')
+if [ -n "$fe_files" ] && [ -d "$repo_root/frontend/node_modules" ]; then
+    (cd "$repo_root/frontend" && npx tsc --noEmit) || {
+        echo "pre-commit hook: rejected — frontend fails to typecheck" >&2
+        fail=1
+    }
+fi
+
+exit $fail

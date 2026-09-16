@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import httpx
 
-from src.core.config import LLM_TIMEOUT_SECONDS, OPENROUTER_API_KEY, OPENROUTER_API_BASE
+from src.core.config import LLM_TIMEOUT_SECONDS, OPENROUTER_API_BASE, OPENROUTER_API_KEY
 
 _BASE_URL = OPENROUTER_API_BASE
 

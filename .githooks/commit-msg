@@ -1,0 +1,18 @@
+#!/bin/sh
+# Enforces the Conventional Commits format documented in CLAUDE.md.
+# Installed locally at .git/hooks/commit-msg; this tracked copy is for
+# re-installing after a fresh clone (see README's "Git hooks" section).
+
+commit_msg_file="$1"
+first_line=$(head -n1 "$commit_msg_file")
+
+pattern='^(feat|fix|docs|style|refactor|perf|test|chore|build|ci|revert)(\([a-z0-9./-]+\))?!?: .+'
+
+if ! echo "$first_line" | grep -qE "$pattern"; then
+    echo "commit-msg hook: rejected — not a Conventional Commit" >&2
+    echo "  got:      $first_line" >&2
+    echo "  expected: <type>(optional-scope): <subject>" >&2
+    echo "  types:    feat fix docs style refactor perf test chore build ci revert" >&2
+    echo "  example:  fix(api): return 504 instead of hanging on a stuck caption call" >&2
+    exit 1
+fi
