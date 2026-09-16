@@ -1,0 +1,44 @@
+name: Release
+
+# Trigger: git tag vX.Y.Z && git push origin vX.Y.Z
+# Cuts a GitHub Release from the matching CHANGELOG.md [X.Y.Z] section.
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify tag matches pyproject.toml version
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          pyproject_version=$(grep -m1 '^version = ' pyproject.toml | sed -E 's/version = "(.*)"/\1/')
+          if [ "$tag_version" != "$pyproject_version" ]; then
+            echo "Tag $GITHUB_REF_NAME doesn't match pyproject.toml version ($pyproject_version)" >&2
+            exit 1
+          fi
+
+      - name: Extract CHANGELOG.md section for this version
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          awk -v ver="$tag_version" '
+            $0 ~ ("^## \\[" ver "\\]") { found=1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > release_notes.md
+          if [ ! -s release_notes.md ]; then
+            echo "No CHANGELOG.md section found for [$tag_version] — add one before tagging" >&2
+            exit 1
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release_notes.md
