@@ -19,14 +19,12 @@ export function NowPlayingBar({ nowPlaying }: NowPlayingBarProps) {
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
 
-  // A new match means a new track — reset playback state and start it, like background
-  // music picking up as soon as the result is in.
+  // The `key={assetUrl}` on this component in App.tsx remounts it (and resets all state
+  // above) on a new track — this effect only needs to handle the actual side effect:
+  // starting playback, like background music picking up as soon as the result is in.
   useEffect(() => {
-    setIsPlaying(false)
-    setCurrentTime(0)
-    setDuration(0)
     void audioRef.current?.play()
-  }, [nowPlaying.assetUrl])
+  }, [])
 
   function togglePlayback() {
     const audio = audioRef.current

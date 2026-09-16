@@ -63,7 +63,7 @@ function App() {
 
       {step === 2 && result && (
         <div className="sticky bottom-0 w-full">
-          <NowPlayingBar nowPlaying={result.nowPlaying} />
+          <NowPlayingBar key={result.nowPlaying.assetUrl} nowPlaying={result.nowPlaying} />
         </div>
       )}
     </div>
