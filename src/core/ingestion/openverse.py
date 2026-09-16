@@ -15,9 +15,13 @@ from src.core.media import download
 
 BASE_URL = "https://api.openverse.org/v1/images/"
 
-# Small on purpose — enough to prove the pipeline works, not a real catalog size.
-MOOD_QUERIES = ["golden hour", "melancholy", "cozy night", "quiet morning", "urban energy"]
-PAGE_SIZE = 5
+# 10 queries x 10 images = 100 — broad enough mood coverage that matches don't just cluster
+# around a handful of queries.
+MOOD_QUERIES = [
+    "golden hour", "melancholy", "cozy night", "quiet morning", "urban energy",
+    "rainy day", "autumn leaves", "ocean waves", "city lights", "peaceful forest",
+]
+PAGE_SIZE = 10
 
 
 def fetch_images(client: httpx.Client, query: str, page_size: int) -> list[dict]:

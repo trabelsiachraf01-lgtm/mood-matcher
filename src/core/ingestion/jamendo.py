@@ -18,9 +18,13 @@ from src.core.media import download, transcode_to_wav
 
 BASE_URL = "https://api.jamendo.com/v3.0/tracks"
 
-# Small on purpose — enough to prove the pipeline works, not a real catalog size.
-MOOD_TAGS = ["melancholy", "upbeat", "chill", "energetic", "cozy"]
-LIMIT = 5
+# 10 tags x 10 tracks = 100 — broad enough mood coverage that matches don't just cluster
+# around a handful of tags.
+MOOD_TAGS = [
+    "melancholy", "upbeat", "chill", "energetic", "cozy",
+    "happy", "sad", "dreamy", "romantic", "dark",
+]
+LIMIT = 10
 
 
 def fetch_tracks(client: httpx.Client, tag: str, limit: int, retries: int = 3) -> list[dict]:
