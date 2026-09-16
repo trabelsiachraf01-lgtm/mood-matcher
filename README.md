@@ -63,9 +63,9 @@ python -m src.core.ingestion.openverse   # no API key needed
 python -m src.core.ingestion.jamendo     # needs JAMENDO_CLIENT_ID (free, devportal.jamendo.com)
 ```
 
-Each pulls a small set of tracks/images across a handful of mood keywords, embeds them with
-EBind, and upserts into Postgres — re-running is safe, it updates existing rows by source id
-rather than duplicating them.
+Each pulls tracks/images across 10 mood keywords (~10 items per keyword, ~100 rows total),
+embeds them with EBind, and upserts into Postgres — re-running is safe, it updates existing
+rows by source id rather than duplicating them.
 
 ### Tests
 
@@ -78,8 +78,9 @@ API key; `test_captioning.py` needs `OPENROUTER_API_KEY` set.
 
 ## Coming next
 
-The catalog is intentionally small (a few dozen rows per mood keyword) — enough to prove
-matching quality is real, not enough to be a real product catalog. Growing it is just running
-ingestion with a longer keyword list. Beyond that: no migrations, no ORM layer, no ingestion
+The catalog (~100 songs, ~100 images) is still intentionally small next to a real product
+catalog, but big enough that matches don't just cluster around a handful of search terms.
+Growing it further is just running ingestion with a longer keyword list. Beyond that: no
+migrations, no ORM layer, no ingestion
 abstractions until something concrete actually needs them — build one slice at a time, prove
 it works, then move on.
