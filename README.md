@@ -18,6 +18,14 @@ Instead of a catalog match, you can also have the song **generated on the spot**
 Every request logs how long captioning, embedding, and (for audio) transcoding each took, plus
 the winning match's distance score — check the backend's stdout.
 
+## Demo 
+
+
+
+[Video](https://github.com/user-attachments/assets/7619314b-46a2-4ebc-882b-a111e9760114) 
+
+
+
 ## Architecture
 
 - [`docs/architecture.md`](docs/architecture.md) — component diagram and why the layers are
