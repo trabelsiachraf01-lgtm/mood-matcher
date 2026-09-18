@@ -2,7 +2,11 @@ import { useRef } from 'react'
 import type { InputMode } from '../api/types'
 import { Button } from '../components/Button'
 import { ImageIcon, TextLinesIcon, WaveformIcon } from '../components/icons'
+import { ProgressBar } from '../components/ProgressBar'
 import type { WizardState } from '../wizardState'
+
+const MATCH_MESSAGES = ['Reading the mood…', 'Searching the catalog…', 'Matching a photo and a song…']
+const GENERATE_MESSAGES = ['Reading the mood…', 'Briefing ElevenLabs…', 'Composing your track…', 'Mixing the final take…']
 
 interface StepInputProps {
   state: WizardState
@@ -130,14 +134,16 @@ export function StepInput({ state, onChange, onContinue, isLoading, error }: Ste
 
       {error && <p className="mt-4 font-body text-sm text-coral">{error}</p>}
 
-      <div className="mt-8 flex justify-end">
-        <Button onClick={onContinue} disabled={!canContinue || isLoading}>
-          {isLoading
-            ? state.songSource === 'generate'
-              ? 'Generating your track…'
-              : 'Finding your match…'
-            : 'Continue'}
-        </Button>
+      <div className="mt-8">
+        {isLoading ? (
+          <ProgressBar messages={state.songSource === 'generate' ? GENERATE_MESSAGES : MATCH_MESSAGES} />
+        ) : (
+          <div className="flex justify-end">
+            <Button onClick={onContinue} disabled={!canContinue}>
+              Continue
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   )
