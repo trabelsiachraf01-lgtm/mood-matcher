@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { getSuggestion } from './api/client'
+import { useRef, useState } from 'react'
+import { generateMusic, getSuggestion } from './api/client'
 import type { SuggestionResponse } from './api/types'
 import { Header } from './components/Header'
 import { NowPlayingBar } from './components/NowPlayingBar'
@@ -15,9 +15,29 @@ function App() {
   const [result, setResult] = useState<SuggestionResponse | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isGeneratingMusic, setIsGeneratingMusic] = useState(false)
+  const [generateError, setGenerateError] = useState<string | null>(null)
+  const generatedUrlRef = useRef<string | null>(null)
 
   function updateWizardState(patch: Partial<WizardState>) {
     setWizardState((prev) => ({ ...prev, ...patch }))
+  }
+
+  async function withGeneratedSong(current: SuggestionResponse): Promise<SuggestionResponse> {
+    const blob = await generateMusic(current.caption)
+    if (generatedUrlRef.current) URL.revokeObjectURL(generatedUrlRef.current)
+    const assetUrl = URL.createObjectURL(blob)
+    generatedUrlRef.current = assetUrl
+    return {
+      ...current,
+      nowPlaying: {
+        title: 'Generated for this mood',
+        artist: 'Eleven Music',
+        album: 'AI-generated, not from the catalog',
+        assetUrl,
+        attribution: { creator: 'Eleven Music', source: 'ElevenLabs', license: 'AI-generated', sourceUrl: 'https://elevenlabs.io/music' },
+      },
+    }
   }
 
   async function handleSubmit() {
@@ -28,11 +48,20 @@ function App() {
         inputMode: wizardState.inputMode,
         text: wizardState.text,
         file: wizardState.file ?? undefined,
+        songSource: wizardState.songSource,
       })
-      setResult(response)
+      // songSource=generate told the backend to skip the catalog lookup entirely (see
+      // suggestion_service.py) — wait for the real track before showing step 2 at all,
+      // instead of landing on a "generating…" placeholder the user didn't ask to see.
+      const finalResult = wizardState.songSource === 'generate' ? await withGeneratedSong(response) : response
+      setResult(finalResult)
       setStep(2)
     } catch {
-      setError('Could not find a match — check the backend is running and try again.')
+      setError(
+        wizardState.songSource === 'generate'
+          ? 'Could not generate a track — check the backend and ELEVENLABS_API_KEY.'
+          : 'Could not find a match — check the backend is running and try again.',
+      )
     } finally {
       setIsLoading(false)
     }
@@ -41,6 +70,19 @@ function App() {
   function handleBackToSearch() {
     setResult(null)
     setStep(1)
+  }
+
+  async function handleGenerateMusic() {
+    if (!result) return
+    setIsGeneratingMusic(true)
+    setGenerateError(null)
+    try {
+      setResult(await withGeneratedSong(result))
+    } catch {
+      setGenerateError('Could not generate a track — check the backend and ELEVENLABS_API_KEY.')
+    } finally {
+      setIsGeneratingMusic(false)
+    }
   }
 
   return (
@@ -58,12 +100,25 @@ function App() {
           />
         )}
 
-        {step === 2 && result && <StepResults result={result} onBack={handleBackToSearch} />}
+        {step === 2 && result && (
+          <StepResults
+            result={result}
+            onBack={handleBackToSearch}
+            songSource={wizardState.songSource}
+            onGenerateMusic={handleGenerateMusic}
+            isGeneratingMusic={isGeneratingMusic}
+            generateError={generateError}
+          />
+        )}
       </div>
 
       {step === 2 && result && (
         <div className="sticky bottom-0 w-full">
-          <NowPlayingBar key={result.nowPlaying.assetUrl} nowPlaying={result.nowPlaying} />
+          <NowPlayingBar
+            key={result.nowPlaying.assetUrl}
+            nowPlaying={result.nowPlaying}
+            isGenerating={isGeneratingMusic}
+          />
         </div>
       )}
     </div>

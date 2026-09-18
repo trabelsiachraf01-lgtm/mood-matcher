@@ -31,3 +31,12 @@ DATABASE_URL = os.environ.get(
 
 JAMENDO_CLIENT_ID = os.environ.get("JAMENDO_CLIENT_ID")
 
+# Eleven Music — opt-in generation (see src/core/clients/elevenlabs.py), not on the default
+# /suggestions path, so a slow or unset key never blocks a normal match.
+ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY")
+ELEVENLABS_API_BASE = os.environ.get("ELEVENLABS_API_BASE", "https://api.elevenlabs.io/v1/music/compose")
+# ElevenLabs accepts 3,000-600,000ms; kept short (30s) since generation latency scales with
+# output length and this runs synchronously in the wizard, not in the background.
+MUSIC_LENGTH_MS = int(os.environ.get("MUSIC_LENGTH_MS", "30000"))
+MUSIC_TIMEOUT_SECONDS = float(os.environ.get("MUSIC_TIMEOUT_SECONDS", "60"))
+

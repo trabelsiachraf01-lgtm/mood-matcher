@@ -98,11 +98,45 @@ export function StepInput({ state, onChange, onContinue, isLoading, error }: Ste
         </div>
       )}
 
+      <div className="mt-8">
+        <p className="font-mono text-xs uppercase tracking-wide text-ink-dim">Matched song</p>
+        <div className="mt-2 flex gap-2">
+          <button
+            type="button"
+            onClick={() => onChange({ songSource: 'catalog' })}
+            aria-pressed={state.songSource === 'catalog'}
+            className={`rounded-full border-2 px-3 py-1.5 font-body text-sm transition-colors ${
+              state.songSource === 'catalog'
+                ? 'border-coral bg-tint-coral text-coral'
+                : 'border-border text-ink-dim hover:border-ink-dim'
+            }`}
+          >
+            Real match from the catalog
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange({ songSource: 'generate' })}
+            aria-pressed={state.songSource === 'generate'}
+            className={`rounded-full border-2 px-3 py-1.5 font-body text-sm transition-colors ${
+              state.songSource === 'generate'
+                ? 'border-coral bg-tint-coral text-coral'
+                : 'border-border text-ink-dim hover:border-ink-dim'
+            }`}
+          >
+            Generate with ElevenLabs
+          </button>
+        </div>
+      </div>
+
       {error && <p className="mt-4 font-body text-sm text-coral">{error}</p>}
 
       <div className="mt-8 flex justify-end">
         <Button onClick={onContinue} disabled={!canContinue || isLoading}>
-          {isLoading ? 'Finding your match…' : 'Continue'}
+          {isLoading
+            ? state.songSource === 'generate'
+              ? 'Generating your track…'
+              : 'Finding your match…'
+            : 'Continue'}
         </Button>
       </div>
     </div>

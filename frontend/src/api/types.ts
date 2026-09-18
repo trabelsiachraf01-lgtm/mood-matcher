@@ -4,6 +4,10 @@
 
 export type InputMode = 'image' | 'song' | 'text'
 
+/** Where the matched song should come from: a real catalog match, or an original track
+ * generated on demand via ElevenLabs Music. */
+export type SongSource = 'catalog' | 'generate'
+
 export interface SuggestionRequest {
   /** Which input mode the user picked. */
   inputMode: InputMode
@@ -11,6 +15,8 @@ export interface SuggestionRequest {
   text?: string
   /** The uploaded image or audio file, when `inputMode` is `image` or `song`. */
   file?: File
+  /** Defaults to `'catalog'` server-side when omitted. */
+  songSource?: SongSource
 }
 
 export type MediaKind = 'image' | 'song'

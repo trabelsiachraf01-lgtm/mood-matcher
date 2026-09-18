@@ -4,6 +4,7 @@ import type { NowPlaying } from '../api/types'
 
 interface NowPlayingBarProps {
   nowPlaying: NowPlaying
+  isGenerating?: boolean
 }
 
 function formatTime(seconds: number): string {
@@ -13,7 +14,7 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
-export function NowPlayingBar({ nowPlaying }: NowPlayingBarProps) {
+export function NowPlayingBar({ nowPlaying, isGenerating }: NowPlayingBarProps) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -62,9 +63,11 @@ export function NowPlayingBar({ nowPlaying }: NowPlayingBarProps) {
       </div>
 
       <div className="min-w-0">
-        <p className="font-mono text-[11px] uppercase tracking-wide text-teal-fg">Now playing</p>
+        <p className="font-mono text-[11px] uppercase tracking-wide text-teal-fg">
+          {isGenerating ? 'Generating…' : 'Now playing'}
+        </p>
         <p className="truncate font-body text-sm text-white/90">
-          {nowPlaying.title} · {nowPlaying.album}
+          {isGenerating ? 'ElevenLabs is composing your track' : `${nowPlaying.title} · ${nowPlaying.album}`}
         </p>
       </div>
 

@@ -1,12 +1,23 @@
-import type { SuggestionResponse } from '../api/types'
+import type { SongSource, SuggestionResponse } from '../api/types'
 import { HeroIllustration } from '../components/HeroIllustration'
 
 interface StepResultsProps {
   result: SuggestionResponse
   onBack: () => void
+  songSource: SongSource
+  onGenerateMusic: () => void
+  isGeneratingMusic: boolean
+  generateError: string | null
 }
 
-export function StepResults({ result, onBack }: StepResultsProps) {
+export function StepResults({
+  result,
+  onBack,
+  songSource,
+  onGenerateMusic,
+  isGeneratingMusic,
+  generateError,
+}: StepResultsProps) {
   return (
     <div className="pb-8">
       <p className="font-mono text-xs uppercase tracking-wide text-ink-dim">Step 2 of 2</p>
@@ -42,6 +53,23 @@ export function StepResults({ result, onBack }: StepResultsProps) {
           View source →
         </a>
       </p>
+
+      {songSource === 'catalog' && (
+        <div className="mt-6 border-t border-ink/10 pt-6">
+          <button
+            type="button"
+            onClick={onGenerateMusic}
+            disabled={isGeneratingMusic}
+            className="rounded-lg bg-ink px-4 py-2 font-body text-sm font-medium text-white hover:bg-ink/90 disabled:opacity-50"
+          >
+            {isGeneratingMusic ? 'Generating…' : 'Generate a track with ElevenLabs'}
+          </button>
+          <p className="mt-2 font-mono text-[11px] uppercase tracking-wide text-ink-dim">
+            Replaces the matched song below with an original, AI-generated one
+          </p>
+          {generateError && <p className="mt-2 font-body text-sm text-coral">{generateError}</p>}
+        </div>
+      )}
     </div>
   )
 }
