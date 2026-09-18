@@ -5,6 +5,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning:
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-18
+
+### Added
+- Generate an original song via ElevenLabs Music instead of a catalog match
+- Real generated caption for text input (previously just echoed the raw text)
+- Progress bar with status text while waiting, replacing the static button
+- Architecture and sequence diagrams in `docs/`
+
 ## [0.1.0] - 2026-09-16
 
 ### Added

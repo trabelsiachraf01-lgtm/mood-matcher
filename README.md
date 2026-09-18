@@ -2,17 +2,28 @@
 
 Give it an image, a song, or a line of text describing a mood, and get back a generated
 caption plus a real matched song/image — with attribution and a link to the real source,
-never AI-generated media.
+never AI-generated media by default.
 
 Cross-modal matching runs on [EBind](https://github.com/encord-team/ebind); captioning runs
-on Gemini Flash-Lite via OpenRouter (picked by benchmarking against a few alternatives —
-see `VISION_MODEL`/`AUDIO_MODEL` in `src/core/config.py`); the catalog is real
-Creative-Commons tracks from **Jamendo** and CC-licensed/public-domain images from
-**Openverse**, embedded and stored in **Postgres + pgvector**. Every match always comes back
-with both a real image and a real song, regardless of what you searched with.
+on Gemini Flash-Lite via OpenRouter for every input mode (picked by benchmarking against a
+few alternatives — see `VISION_MODEL`/`AUDIO_MODEL`/`TEXT_MODEL` in `src/core/config.py`);
+the catalog is real Creative-Commons tracks from **Jamendo** and CC-licensed/public-domain
+images from **Openverse**, embedded and stored in **Postgres + pgvector**. Every match
+always comes back with both a real image and a real song, regardless of what you searched
+with.
+
+Instead of a catalog match, you can also have the song **generated on the spot** by
+[ElevenLabs Music](https://elevenlabs.io/music) — pick "Generate with ElevenLabs" in step 1.
 
 Every request logs how long captioning, embedding, and (for audio) transcoding each took, plus
 the winning match's distance score — check the backend's stdout.
+
+## Architecture
+
+- [`docs/architecture.md`](docs/architecture.md) — component diagram and why the layers are
+  split the way they are.
+- [`docs/sequence-diagrams.md`](docs/sequence-diagrams.md) — request flow for a catalog match
+  vs. an ElevenLabs-generated song.
 
 ## Run it locally
 
@@ -36,6 +47,9 @@ python3 -m venv .venv && source .venv/bin/activate   # first time only
 pip install -r requirements.txt                      # first time only
 brew install ffmpeg                                   # first time only, macOS
 cp .env.example .env                                  # first time only — fill in OPENROUTER_API_KEY, JAMENDO_CLIENT_ID
+                                                       # ELEVENLABS_API_KEY is optional — only needed for the
+                                                       # "Generate with ElevenLabs" button, and requires a paid
+                                                       # ElevenLabs plan (the Music API isn't on the free tier)
 
 DYLD_LIBRARY_PATH="/opt/homebrew/lib" uvicorn src.api.app:app --reload --host 127.0.0.1 --port 8000
 ```
