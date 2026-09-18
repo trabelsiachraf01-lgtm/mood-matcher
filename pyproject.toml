@@ -1,6 +1,6 @@
 [project]
 name = "hushtone"
-version = "0.1.0"
+version = "0.2.0"
 description = "Cross-modal mood-matching: an image, a song, or text in; a generated caption plus a real matched song/image out."
 requires-python = ">=3.11"
 
