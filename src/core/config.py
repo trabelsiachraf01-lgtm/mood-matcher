@@ -16,6 +16,7 @@ OPENROUTER_API_BASE = os.environ.get("OPENROUTER_API_BASE", "https://openrouter.
 
 VISION_MODEL = os.environ.get("VISION_MODEL", "google/gemini-3.5-flash-lite")
 AUDIO_MODEL = os.environ.get("AUDIO_MODEL", "google/gemini-3.5-flash-lite")
+TEXT_MODEL = os.environ.get("TEXT_MODEL", "google/gemini-3.5-flash-lite")
 
 EBIND_MODEL_ID = os.environ.get("EBIND_MODEL_ID", "encord-team/ebind-full")
 

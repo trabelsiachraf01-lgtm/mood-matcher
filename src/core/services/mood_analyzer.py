@@ -17,7 +17,7 @@ from typing import Literal, TypeVar
 import httpx
 from fastapi import HTTPException, UploadFile
 
-from src.core.captioning.captioner import caption_audio, caption_image
+from src.core.captioning.captioner import caption_audio, caption_image, caption_text
 from src.core.config import EMBED_TIMEOUT_SECONDS, LLM_TIMEOUT_SECONDS
 from src.core.embedding.embedder import embed_audio, embed_image, embed_text
 from src.core.media import TRANSCODE_TIMEOUT_SECONDS, transcode_to_wav
@@ -68,9 +68,14 @@ class MoodAnalyzer:
         return result
 
     def _analyze_text(self, text: str) -> MoodAnalysis:
-        with ThreadPoolExecutor(max_workers=1) as pool:
-            embedding = _await(pool.submit(embed_text, text), EMBED_TIMEOUT_SECONDS, "embedding")
-        return MoodAnalysis(caption=text, embedding=embedding)
+        # Same shape as image/audio: caption (network) and embedding (local) don't depend
+        # on each other, so run them concurrently instead of paying their sum.
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            caption_future = pool.submit(caption_text, text)
+            embedding_future = pool.submit(embed_text, text)
+            caption = _await(caption_future, LLM_TIMEOUT_SECONDS + _SAFETY_MARGIN_SECONDS, "captioning")
+            embedding = _await(embedding_future, EMBED_TIMEOUT_SECONDS, "embedding")
+        return MoodAnalysis(caption=caption, embedding=embedding)
 
     def _analyze_image(self, file: UploadFile) -> MoodAnalysis:
         contents = file.file.read()
