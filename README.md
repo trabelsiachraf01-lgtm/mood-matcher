@@ -35,18 +35,36 @@ the winning match's distance score — check the backend's stdout.
 
 ## Run it locally
 
-Three terminals.
-
-**Database** (from the repo root):
+One command:
 
 ```bash
-docker compose up -d               # first time only pulls the pgvector/pgvector:pg16 image
-docker exec -i mood-matcher-db-1 psql -U mood_matcher -d mood_matcher < schema.sql   # first time only
+cp .env.example .env   # first time only — fill in OPENROUTER_API_KEY, JAMENDO_CLIENT_ID
+                        # ELEVENLABS_API_KEY is optional — only needed for the
+                        # "Generate with ElevenLabs" button, and requires a paid
+                        # ElevenLabs plan (the Music API isn't on the free tier)
+
+docker compose up --build
 ```
 
 Requires Docker. This project uses [Colima](https://github.com/abiosoft/colima) as a free,
 headless Docker runtime on macOS (`brew install colima docker docker-compose && colima start`)
 — Docker Desktop works the same if you already have it.
+
+That builds and starts the database (with `schema.sql` applied automatically on first boot),
+the backend on **http://localhost:8000**, and the frontend on **http://localhost:5173**. Both
+backend and frontend bind-mount the source tree and run in reload/dev mode, so local edits pick
+up live, same as running them directly. First request after startup takes a few seconds
+(loading EBind).
+
+### Run without Docker
+
+Three terminals — useful for debugging with a local Python/Node toolchain directly.
+
+**Database**:
+
+```bash
+docker compose up -d db
+```
 
 **Backend** (from the repo root):
 
@@ -54,17 +72,14 @@ headless Docker runtime on macOS (`brew install colima docker docker-compose && 
 python3 -m venv .venv && source .venv/bin/activate   # first time only
 pip install -r requirements.txt                      # first time only
 brew install ffmpeg                                   # first time only, macOS
-cp .env.example .env                                  # first time only — fill in OPENROUTER_API_KEY, JAMENDO_CLIENT_ID
-                                                       # ELEVENLABS_API_KEY is optional — only needed for the
-                                                       # "Generate with ElevenLabs" button, and requires a paid
-                                                       # ElevenLabs plan (the Music API isn't on the free tier)
+cp .env.example .env                                  # first time only, see above
 
 DYLD_LIBRARY_PATH="/opt/homebrew/lib" uvicorn src.api.app:app --reload --host 127.0.0.1 --port 8000
 ```
 
 The `DYLD_LIBRARY_PATH` is a macOS-only quirk — without it, `torchcodec` can't find
-Homebrew's `ffmpeg` libs and audio embedding fails silently. First request after startup
-takes a few seconds (loading EBind).
+Homebrew's `ffmpeg` libs and audio embedding fails silently. Not needed in the Docker path,
+which runs on Linux.
 
 **Frontend** (from `frontend/`):
 
@@ -81,8 +96,10 @@ Open **http://localhost:5173**. The backend must already be running — the fron
 The database starts empty — nothing to match against until you run ingestion at least once:
 
 ```bash
-python -m src.core.ingestion.openverse   # no API key needed
-python -m src.core.ingestion.jamendo     # needs JAMENDO_CLIENT_ID (free, devportal.jamendo.com)
+docker compose run --rm backend python -m src.core.ingestion.openverse   # no API key needed
+docker compose run --rm backend python -m src.core.ingestion.jamendo     # needs JAMENDO_CLIENT_ID
+
+# without Docker: drop the `docker compose run --rm backend` prefix
 ```
 
 Each pulls tracks/images across 10 mood keywords (~10 items per keyword, ~100 rows total),

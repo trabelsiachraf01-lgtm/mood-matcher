@@ -5,6 +5,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning:
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-24
+
+### Added
+- `docker compose up --build` runs the whole stack (db, backend, frontend) with one command
+- Database schema now applies automatically on first container boot
+
+### Changed
+- README leads with the Docker path; manual venv/npm setup moved to "Run without Docker"
+
 ## [0.2.0] - 2026-09-18
 
 ### Added

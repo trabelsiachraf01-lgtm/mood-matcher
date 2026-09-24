@@ -9,11 +9,37 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mood_matcher"]
       interval: 5s
       timeout: 5s
       retries: 5
+
+  backend:
+    build: .
+    env_file: .env
+    environment:
+      # Overrides the .env default (localhost) — inside the compose network the db is
+      # reachable by service name, not localhost.
+      DATABASE_URL: postgresql://mood_matcher:mood_matcher@db:5432/mood_matcher
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
 
 volumes:
   pgdata:
